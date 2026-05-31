@@ -1,73 +1,77 @@
 'use client'
 import { useEffect } from 'react'
-import { useTweaks, TweaksPanel, TweakSection, TweakColor, TweakRadio } from './TweaksPanel'
+import { useTweaks, TweaksPanel, TweakSection, TweakSelect, TweakColor, TweakRadio } from './TweaksPanel'
 
-const TWEAK_DEFAULTS = {
-  accent: '#1B5080',
-  warmth: 'warm',
-  radius: 'soft',
-  headFont: 'expressive',
+const FONT_MAP = {
+  'Playfair Display': '"Playfair Display", Georgia, serif',
+  'Cormorant Garamond': '"Cormorant Garamond", Georgia, serif',
+  'DM Serif Display': '"DM Serif Display", Georgia, serif',
+  'Libre Franklin': '"Libre Franklin", system-ui, sans-serif',
+  'Source Sans 3': '"Source Sans 3", system-ui, sans-serif',
+  'Mulish': '"Mulish", system-ui, sans-serif',
 }
 
-const WARMTH = {
-  warm: { '--bg': '#FAF8F3', '--surface-2': '#F3EEE5', '--line': '#E7E0D3', '--line-soft': '#EFE9DD' },
-  cool: { '--bg': '#F6F8F9', '--surface-2': '#EDF1F3', '--line': '#E1E6EA', '--line-soft': '#EBEFF2' },
-  cream: { '--bg': '#F8F3E8', '--surface-2': '#F0E8D6', '--line': '#E6DCC4', '--line-soft': '#EFE7D6' },
-}
-const RADIUS = {
-  sharp: { '--radius': '8px', '--radius-sm': '6px', '--radius-lg': '12px' },
-  soft: { '--radius': '18px', '--radius-sm': '12px', '--radius-lg': '28px' },
-  round: { '--radius': '26px', '--radius-sm': '16px', '--radius-lg': '40px' },
-}
-const HEADFONT = {
-  expressive: '"Bricolage Grotesque", "Hanken Grotesk", sans-serif',
-  clean: '"Hanken Grotesk", system-ui, sans-serif',
+const PALETTES = {
+  'Sunset Coral':  ['#C8593A', '#B44A2E', '#C9901A'],
+  'Jessamine Gold': ['#C9901A', '#B57E10', '#C8593A'],
+  'Indigo & Gold': ['#1A3360', '#12264A', '#C9901A'],
+  'Marsh Sage':    ['#6F7660', '#586049', '#C9901A'],
 }
 
-function TweaksApp() {
-  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS)
+const MT_DEFAULTS = {
+  headline: 'Playfair Display',
+  body: 'Libre Franklin',
+  palette: ['#C8593A', '#B44A2E', '#C9901A'],
+  texture: 'medium',
+}
 
-  useEffect(() => {
-    const root = document.documentElement.style
-    root.setProperty('--accent', t.accent)
-    const w = WARMTH[t.warmth] || WARMTH.warm
-    Object.entries(w).forEach(([k, v]) => root.setProperty(k, v))
-    const r = RADIUS[t.radius] || RADIUS.soft
-    Object.entries(r).forEach(([k, v]) => root.setProperty(k, v))
-    root.setProperty('--ff-display', HEADFONT[t.headFont] || HEADFONT.expressive)
-  }, [t.accent, t.warmth, t.radius, t.headFont])
+function applyTokens(t) {
+  const root = document.documentElement
+  root.style.setProperty('--font-display', FONT_MAP[t.headline] || FONT_MAP['Playfair Display'])
+  root.style.setProperty('--font-body', FONT_MAP[t.body] || FONT_MAP['Libre Franklin'])
+  const p = Array.isArray(t.palette) ? t.palette : PALETTES['Sunset Coral']
+  root.style.setProperty('--accent', p[0])
+  root.style.setProperty('--accent-strong', p[1])
+  root.style.setProperty('--highlight', p[2])
+  root.setAttribute('data-texture', t.texture || 'medium')
+}
+
+function MTTweaks() {
+  const [t, setTweak] = useTweaks(MT_DEFAULTS)
+
+  useEffect(() => { applyTokens(t) }, [t])
 
   return (
     <TweaksPanel title="Tweaks">
-      <TweakSection label="Brand accent" />
+      <TweakSection label="Typography" />
+      <TweakSelect
+        label="Headline"
+        value={t.headline}
+        options={['Playfair Display', 'Cormorant Garamond', 'DM Serif Display']}
+        onChange={(v) => setTweak('headline', v)}
+      />
+      <TweakSelect
+        label="Body"
+        value={t.body}
+        options={['Libre Franklin', 'Source Sans 3', 'Mulish']}
+        onChange={(v) => setTweak('body', v)}
+      />
+      <TweakSection label="Accent palette" />
       <TweakColor
-        label="Accent color"
-        value={t.accent}
-        options={['#2F6F5F', '#C06A43', '#355FB0', '#6B5BD6']}
-        onChange={(v) => setTweak('accent', v)}
+        label="Color"
+        value={t.palette}
+        options={Object.values(PALETTES)}
+        onChange={(v) => setTweak('palette', v)}
       />
-      <TweakSection label="Feel" />
+      <TweakSection label="Texture & ornament" />
       <TweakRadio
-        label="Paper tone"
-        value={t.warmth}
-        options={['warm', 'cool', 'cream']}
-        onChange={(v) => setTweak('warmth', v)}
-      />
-      <TweakRadio
-        label="Corners"
-        value={t.radius}
-        options={['sharp', 'soft', 'round']}
-        onChange={(v) => setTweak('radius', v)}
-      />
-      <TweakSection label="Type" />
-      <TweakRadio
-        label="Headlines"
-        value={t.headFont}
-        options={['expressive', 'clean']}
-        onChange={(v) => setTweak('headFont', v)}
+        label="Richness"
+        value={t.texture}
+        options={['subtle', 'medium', 'rich']}
+        onChange={(v) => setTweak('texture', v)}
       />
     </TweaksPanel>
   )
 }
 
-export default TweaksApp
+export default MTTweaks

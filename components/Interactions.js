@@ -3,140 +3,131 @@ import { useEffect } from 'react'
 
 export default function Interactions() {
   useEffect(() => {
-    // Sticky nav shadow
-    const nav = document.getElementById('nav')
-    function onNavScroll() {
-      if (window.scrollY > 8) nav.classList.add('scrolled')
-      else nav.classList.remove('scrolled')
-    }
-    window.addEventListener('scroll', onNavScroll, { passive: true })
-    onNavScroll()
+    // Enable JS-gated reveal animations
+    document.documentElement.classList.add('js')
 
-    // Mobile menu
-    const toggle = document.getElementById('navToggle')
-    const menu = document.getElementById('mobileMenu')
-    function setMenu(open) {
-      toggle.classList.toggle('open', open)
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false')
-      menu.style.display = open ? 'block' : 'none'
-    }
-    function onToggleClick() {
-      setMenu(!toggle.classList.contains('open'))
-    }
-    function onMenuClick(e) {
-      if (e.target.tagName === 'A') setMenu(false)
-    }
-    toggle.addEventListener('click', onToggleClick)
-    menu.addEventListener('click', onMenuClick)
-
-    // Reveal + counters via scroll position
-    const remaining = Array.from(document.querySelectorAll('.reveal'))
-    const counters = Array.from(document.querySelectorAll('[data-count]'))
-    const started = {}
-
-    function finalCount(el) {
-      el.innerHTML = el.getAttribute('data-count') + '<span class="u">' + (el.getAttribute('data-suffix') || '') + '</span>'
-    }
-    function animateCount(el, key) {
-      if (started[key]) return
-      started[key] = true
-      if (document.hidden) { finalCount(el); return }
-      const target = parseFloat(el.getAttribute('data-count'))
-      const suffix = el.getAttribute('data-suffix') || ''
-      const dur = 1300
-      let start = null
-      function frame(ts) {
-        if (!start) start = ts
-        const p = Math.min((ts - start) / dur, 1)
-        const eased = 1 - Math.pow(1 - p, 3)
-        const val = Math.round(eased * target)
-        el.innerHTML = val + '<span class="u">' + suffix + '</span>'
-        if (p < 1) requestAnimationFrame(frame)
-      }
-      requestAnimationFrame(frame)
-    }
-
-    function check() {
-      const vh = window.innerHeight || document.documentElement.clientHeight
-      for (let i = remaining.length - 1; i >= 0; i--) {
-        const el = remaining[i]
-        const r = el.getBoundingClientRect()
-        if (r.top < vh * 0.9 && r.bottom > 0) {
-          el.classList.add('in')
-          remaining.splice(i, 1)
-        }
-      }
-      counters.forEach((el, idx) => {
-        const r = el.getBoundingClientRect()
-        if (r.top < vh * 0.85 && r.bottom > 0) animateCount(el, idx)
+    // ---- Build Charleston fanlight (radiating spokes + concentric arcs) ----
+    const fan = document.getElementById('haFan')
+    if (fan) {
+      ;[58, 92, 128].forEach(function (w, i) {
+        const arc = document.createElement('div')
+        arc.className = 'arc'
+        arc.style.width = w + '%'
+        arc.style.aspectRatio = '1'
+        arc.style.opacity = (0.5 - i * 0.12).toFixed(2)
+        fan.appendChild(arc)
       })
+      const spokes = 19
+      for (let s = 0; s < spokes; s++) {
+        const t = s / (spokes - 1)
+        const deg = -84 + t * 168
+        const sp = document.createElement('div')
+        sp.className = 'spoke'
+        const center = 1 - Math.abs(deg) / 90
+        sp.style.height = (62 + center * 30) + '%'
+        sp.style.opacity = (0.4 + center * 0.5).toFixed(2)
+        sp.style.transform = 'translateX(-50%) rotate(' + deg + 'deg)'
+        fan.appendChild(sp)
+      }
     }
 
-    window.addEventListener('scroll', check, { passive: true })
-    window.addEventListener('resize', check)
-
-    function revealInstant() {
-      document.documentElement.classList.add('reveal-instant')
-      remaining.forEach(el => el.classList.add('in'))
-      remaining.length = 0
-      counters.forEach((el, idx) => animateCount(el, idx))
+    // ---- Sweetgrass blades along the waterline ----
+    const grass = document.getElementById('haGrass')
+    if (grass) {
+      const blades = 44
+      for (let b = 0; b < blades; b++) {
+        const bl = document.createElement('div')
+        bl.className = 'blade'
+        const depth = Math.random()
+        bl.style.left = (b / blades) * 100 + (Math.random() * 2 - 1) + '%'
+        bl.style.height = (16 + depth * 44) + 'px'
+        bl.style.opacity = (0.45 + depth * 0.5).toFixed(2)
+        bl.style.transform = 'rotate(' + ((Math.random() * 2 - 1) * 12) + 'deg)'
+        grass.appendChild(bl)
+      }
     }
 
-    document.addEventListener('visibilitychange', function () { if (!document.hidden) check() })
+    // ---- Scroll reveal ----
+    const reveals = Array.from(document.querySelectorAll('.reveal'))
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    if (document.hidden) {
-      revealInstant()
+    if (reduceMotion) {
+      reveals.forEach(el => el.classList.add('in'))
     } else {
-      check()
-      requestAnimationFrame(check)
-      setTimeout(check, 300)
-    }
-
-    // Hard safety net: after entrance animations finish, lock in visible state
-    const safetyTimer = setTimeout(() => {
-      remaining.forEach(el => el.classList.add('in'))
-      const vh = window.innerHeight || document.documentElement.clientHeight
-      counters.forEach((el, idx) => {
-        const r = el.getBoundingClientRect()
-        if (r.top < vh && r.bottom > 0) { started[idx] = true; finalCount(el) }
-      })
-      document.documentElement.classList.add('reveal-instant')
-    }, 1500)
-
-    // FAQ accordion
-    const faqItems = Array.from(document.querySelectorAll('.faq-item'))
-    const faqListeners = []
-    faqItems.forEach(item => {
-      const q = item.querySelector('.faq-q')
-      const a = item.querySelector('.faq-a')
-      const handler = () => {
-        const isOpen = item.classList.contains('open')
-        faqItems.forEach(other => {
-          other.classList.remove('open')
-          other.querySelector('.faq-a').style.maxHeight = null
-        })
-        if (!isOpen) {
-          item.classList.add('open')
-          a.style.maxHeight = a.scrollHeight + 'px'
+      let scheduled = false
+      const checkReveals = () => {
+        const vh = window.innerHeight || document.documentElement.clientHeight
+        for (let i = reveals.length - 1; i >= 0; i--) {
+          const el = reveals[i]
+          const r = el.getBoundingClientRect()
+          if (r.top < vh * 0.92 && r.bottom > 0) {
+            el.classList.add('in')
+            reveals.splice(i, 1)
+          }
         }
       }
-      q.addEventListener('click', handler)
-      faqListeners.push({ q, handler })
-    })
-    if (faqItems.length) {
-      faqItems[0].classList.add('open')
-      const firstA = faqItems[0].querySelector('.faq-a')
-      requestAnimationFrame(() => { firstA.style.maxHeight = firstA.scrollHeight + 'px' })
-    }
+      const onScroll = () => {
+        if (scheduled) return
+        scheduled = true
+        requestAnimationFrame(() => { scheduled = false; checkReveals() })
+      }
+      window.addEventListener('scroll', onScroll, { passive: true })
+      window.addEventListener('resize', onScroll, { passive: true })
+      checkReveals()
+      setTimeout(checkReveals, 120)
+      setTimeout(checkReveals, 500)
+      // Failsafe: never leave content invisible
+      const safetyTimer = setTimeout(() => {
+        reveals.forEach(el => el.classList.add('in'))
+      }, 2500)
 
-    return () => {
-      window.removeEventListener('scroll', onNavScroll)
-      window.removeEventListener('scroll', check)
-      window.removeEventListener('resize', check)
-      toggle.removeEventListener('click', onToggleClick)
-      menu.removeEventListener('click', onMenuClick)
-      clearTimeout(safetyTimer)
-      faqListeners.forEach(({ q, handler }) => q.removeEventListener('click', handler))
+      // ---- Moon parallax ----
+      const moon = document.querySelector('.hero-art .moon-lg')
+      let onMoonScroll
+      if (moon) {
+        onMoonScroll = () => {
+          const y = window.scrollY
+          if (y < 900) moon.style.transform = 'translateY(' + (y * 0.04) + 'px)'
+        }
+        window.addEventListener('scroll', onMoonScroll, { passive: true })
+      }
+
+      // ---- FAQ accordion ----
+      const items = Array.from(document.querySelectorAll('.faq-item'))
+      const faqListeners = []
+      items.forEach(item => {
+        const q = item.querySelector('.faq-q')
+        const a = item.querySelector('.faq-a')
+        const handler = () => {
+          const isOpen = item.classList.contains('open')
+          items.forEach(other => {
+            other.classList.remove('open')
+            const oa = other.querySelector('.faq-a')
+            if (oa) oa.style.maxHeight = null
+          })
+          if (!isOpen) {
+            item.classList.add('open')
+            a.style.maxHeight = a.scrollHeight + 'px'
+          }
+        }
+        q.addEventListener('click', handler)
+        faqListeners.push({ q, handler })
+      })
+      const onFaqResize = () => {
+        const open = document.querySelector('.faq-item.open .faq-a')
+        if (open) open.style.maxHeight = open.scrollHeight + 'px'
+      }
+      window.addEventListener('resize', onFaqResize)
+
+      return () => {
+        window.removeEventListener('scroll', onScroll)
+        window.removeEventListener('resize', onScroll)
+        window.removeEventListener('resize', onFaqResize)
+        if (onMoonScroll) window.removeEventListener('scroll', onMoonScroll)
+        clearTimeout(safetyTimer)
+        faqListeners.forEach(({ q, handler }) => q.removeEventListener('click', handler))
+        document.documentElement.classList.remove('js')
+      }
     }
   }, [])
 
