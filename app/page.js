@@ -27,7 +27,7 @@ export default function Home() {
         <section className="hero">
           <div className="shell hero-grid">
             <div className="hero-copy">
-              <span className="eyebrow reveal">Automation studio · Charleston, SC</span>
+              <span className="eyebrow reveal">Automation studio · Camden, SC</span>
               <h1 className="reveal d1">Stop doing it <span className="em">by hand.</span></h1>
               <p className="hero-sub reveal d2">We&apos;re Matthew and Thomas. We find the repetitive busywork quietly draining your week and build automations that connect the tools you already use — then run on their own.</p>
               <div className="hero-cta reveal d3">
@@ -331,7 +331,7 @@ export default function Home() {
             </div>
           </div>
           <div className="footer-bottom">
-            <span>© 2026 The M&amp;T Company · Charleston, South Carolina</span>
+            <span>© 2026 The M&amp;T Company · Camden, South Carolina</span>
             <span>Built by hand, run on its own.</span>
           </div>
         </div>
